@@ -2,133 +2,114 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>KUIZ MPU2071 - SISTEM KOKURIKULUM</title>
+    <title>UJIAN MPU2071 - IPG KAMPUS DARULAMAN</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --accent: #FFB800; --bg: #0d0d0d; --card: #1a1a1a; }
-        body { background: var(--bg); color: #e0e0e0; font-family: sans-serif; margin: 0; padding: 20px; }
-        .card { background: var(--card); padding: 30px; border-radius: 12px; max-width: 850px; margin: auto; border: 1px solid #333; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 15px; margin: 10px 0; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--accent); color: #000; padding: 18px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 1rem; }
-        .q-box { border-left: 4px solid var(--accent); padding-left: 20px; margin-top: 30px; }
-        canvas { background: #fff; border: 2px solid var(--accent); cursor: crosshair; touch-action: none; border-radius: 8px; }
+        :root { --amber: #FFB800; --bg: #0d0d0d; }
+        body { background: var(--bg); color: #fff; font-family: system-ui; padding: 20px; }
+        .card { background: #161616; padding: 25px; border-radius: 10px; max-width: 800px; margin: auto; border: 1px solid #333; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin: 10px 0; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: var(--amber); color: #000; padding: 15px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        #canvas { background: #fff; border: 2px solid var(--amber); cursor: crosshair; touch-action: none; border-radius: 5px; }
         .hidden { display: none; }
+        .q-text { font-weight: bold; color: var(--amber); margin-top: 25px; }
     </style>
 </head>
 <body>
 
 <div id="login-zone" class="card">
-    <h2 style="color: var(--accent)">MPU2071: PENGURUSAN KOKURIKULUM</h2>
-    <p>Sila masukkan No. Kad Pengenalan (981016065935):</p>
-    <input type="text" id="ic-field">
-    <button class="btn" id="btn-login" onclick="mulaLogin()">MASUK & JAWAB</button>
+    <h2 style="color: var(--amber)">PENGURUSAN KOKURIKULUM (MPU2071)</h2>
+    <p>Masukkan IC untuk mula ujian:</p>
+    <input type="text" id="ic-field" placeholder="Contoh: 981016065935">
+    <button class="btn" id="btn-auth" onclick="startAuth()">MASUK SEKARANG</button>
 </div>
 
-<div id="exam-zone" class="hidden card">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div id="p-info" style="font-weight:bold; color:var(--accent);"></div>
-        <div id="timer" style="font-size:1.5rem; font-weight:bold;">30:00</div>
+<div id="exam-zone" class="card hidden">
+    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px;">
+        <span id="p-name"></span>
+        <span id="timer" style="color:var(--amber); font-weight:bold;">30:00</span>
     </div>
 
-    <div class="q-box">
-        <p>1. Berikan 5 matlamat kokurikulum selaras dengan Falsafah Pendidikan Negara. (5 Markah)</p>
-        <textarea id="ans1" rows="3"></textarea>
-    </div>
+    <p class="q-text">1. Berikan 5 matlamat kokurikulum selaras dengan Falsafah Pendidikan Negara. (5 Markah)</p>
+    <textarea id="ans1" rows="4"></textarea>
 
-    <div class="q-box">
-        <p>2. Lukiskan carta organisasi Persatuan Sejarah sekolah. (4 Markah)</p>
-        <div style="margin-bottom:10px;">
-            <button type="button" onclick="clearCanvas()" style="background:#444; color:#fff; padding:5px 10px; border:none; cursor:pointer;">Padam Lukisan</button>
-        </div>
-        <canvas id="canvas" width="750" height="400"></canvas>
-    </div>
+    <p class="q-text">2. LUKIS CARTA ORGANISASI: Binakan struktur organisasi Persatuan Sejarah sekolah. (4 Markah)</p>
+    <button type="button" onclick="clearDraw()" style="margin-bottom:5px; background:#444; color:#fff; border:none; padding:5px 10px; cursor:pointer;">Padam Lukisan</button><br>
+    <canvas id="canvas" width="750" height="350"></canvas>
 
-    <div class="q-box">
-        <p>3. Nyatakan kelompok gerak kerja kokurikulum dan contohnya. (6 Markah)</p>
-        <textarea id="ans3" rows="3"></textarea>
-    </div>
+    <p class="q-text">3. Nyatakan kelompok gerak kerja kokurikulum dan contohnya. (6 Markah)</p>
+    <textarea id="ans3" rows="4"></textarea>
 
-    <div class="q-box">
-        <p>4. Nyatakan 5 tugas Bendahari Kadet Remaja Sekolah. (5 Markah)</p>
-        <textarea id="ans4" rows="3"></textarea>
-    </div>
+    <p class="q-text">4. Nyatakan 5 tugas Bendahari Pasukan Kadet Remaja Sekolah. (5 Markah)</p>
+    <textarea id="ans4" rows="4"></textarea>
 
-    <button class="btn" style="margin-top:30px;" onclick="hantarSemua()">HANTAR & SIMPAN PDF</button>
+    <button class="btn" style="margin-top:30px;" onclick="finishExam()">HANTAR & JANA PDF</button>
 </div>
 
 <script>
-    // MASUKKAN URL DEPLOYMENT BARU ANDA DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyetp-HZUNQ6SSN_JN6wwxVz4Y53VFiecfzcJgX7Dp5D7DBjIWYvrebSV0EmdIBf0RSmA/exec";
-    let student = null;
-    let canvas, ctx, drawing = false;
+    const API = "URL_DEPLOY_BARU_ANDA_DI_SINI";
+    let user = null;
+    let canvas, ctx, isDrawing = false;
 
-    function mulaLogin() {
-        const ic = document.getElementById('ic-field').value.replace(/-/g, "").trim();
-        document.getElementById('btn-login').innerText = "MENYEMAK...";
-        const script = document.createElement('script');
-        script.src = `${SCRIPT_URL}?action=login&ic=${ic}&callback=handleRes`;
-        document.body.appendChild(script);
+    function startAuth() {
+        const ic = document.getElementById('ic-field').value.replace(/-/g, "");
+        document.getElementById('btn-auth').innerText = "MENYEMAK...";
+        const s = document.createElement('script');
+        s.src = `${API}?action=login&ic=${ic}&callback=onLogin`;
+        document.body.appendChild(s);
     }
 
-    function handleRes(res) {
-        if(res.result === "success") {
-            student = res.data; student.ic = document.getElementById('ic-field').value;
-            document.getElementById('login-zone').classList.add('hidden');
-            document.getElementById('exam-zone').classList.remove('hidden');
-            document.getElementById('p-info').innerText = student.nama;
-            initCanvas(); mulaiTimer();
+    function onLogin(r) {
+        if(r.result === "success") {
+            user = r.data; user.ic = document.getElementById('ic-field').value;
+            document.getElementById('login-zone').className = "hidden";
+            document.getElementById('exam-zone').className = "card";
+            document.getElementById('p-name').innerText = user.nama;
+            setupDraw(); startTimer();
         } else {
-            alert("Ralat: Pelajar tidak dijumpai.");
-            document.getElementById('btn-login').innerText = "MASUK & JAWAB";
+            alert("IC Tidak Dijumpai!");
+            document.getElementById('btn-auth').innerText = "MASUK SEKARANG";
         }
     }
 
-    function initCanvas() {
-        canvas = document.getElementById('canvas');
-        ctx = canvas.getContext('2d');
+    function setupDraw() {
+        canvas = document.getElementById('canvas'); ctx = canvas.getContext('2d');
         ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-        const start = (e) => { drawing = true; ctx.beginPath(); draw(e); };
-        const end = () => { drawing = false; };
-        const draw = (e) => {
-            if(!drawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-            ctx.lineTo(x, y); ctx.stroke();
+        const getPos = (e) => {
+            const r = canvas.getBoundingClientRect();
+            return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top };
         };
-        canvas.onmousedown = start; canvas.onmouseup = end; canvas.onmousemove = draw;
-        canvas.ontouchstart = start; canvas.ontouchend = end; canvas.ontouchmove = draw;
+        const start = (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+        const move = (e) => { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+        canvas.onmousedown = start; canvas.onmousemove = move; window.onmouseup = () => isDrawing = false;
+        canvas.ontouchstart = start; canvas.ontouchmove = move;
     }
 
-    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    function clearDraw() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    function mulaiTimer() {
+    function startTimer() {
         let t = 1800;
         setInterval(() => {
             t--; let m = Math.floor(t/60), s = t%60;
-            document.getElementById('timer').innerText = m+":"+(s<10?"0"+s:s);
-            if(t<=0) hantarSemua();
+            document.getElementById('timer').innerText = m + ":" + (s<10?"0"+s:s);
+            if(t <= 0) finishExam();
         }, 1000);
     }
 
-    async function hantarSemua() {
+    async function finishExam() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("KUIZ MPU2071: " + student.nama, 20, 20);
+        doc.text("KUIZ MPU2071: " + user.nama, 20, 20);
         doc.text("Jawapan 1: " + document.getElementById('ans1').value, 20, 40);
         
         doc.addPage();
-        doc.text("Jawapan 2 (Carta Organisasi):", 20, 20);
-        const imgData = canvas.toDataURL('image/png');
-        doc.addImage(imgData, 'PNG', 15, 30, 180, 100);
+        doc.text("Soalan 2 (Carta Organisasi):", 20, 20);
+        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 30, 180, 85);
         
-        doc.save(`MPU2071_${student.no_matrik}.pdf`);
+        doc.save(`JAWAPAN_${user.no_matrik}.pdf`);
 
-        await fetch(SCRIPT_URL, {
-            method: 'POST', mode: 'no-cors',
-            body: JSON.stringify({action: 'submit', ic: student.ic})
-        });
-        alert("Berjaya! Sila simpan PDF."); location.reload();
+        fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'submit', ic: user.ic}) });
+        alert("Selesai! Sila simpan PDF."); location.reload();
     }
 </script>
 </body>
