@@ -2,317 +2,132 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEM UJIAN MPU2071 PDPP</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;800&display=swap" rel="stylesheet">
+    <title>KUIZ MPU2071 - IPG KAMPUS DARULAMAN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root {
-            --primary: #FFB800;
-            --bg: #0F1115;
-            --surface: #16191E;
-            --text: #E2E8F0;
-            --danger: #FF4B4B;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Outfit', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100-vh;
-        }
-
-        /* Anti-Cheat Overlay */
-        #cheat-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(255, 75, 75, 0.9);
-            z-index: 9999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .header {
-            border-bottom: 2px solid var(--surface);
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 17, 21, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 2.5rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            transition: all 0.3s ease;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        input, textarea {
-            width: 100%;
-            background: #090B0E;
-            border: 1px solid #2D3748;
-            border-radius: 8px;
-            padding: 1rem;
-            color: white;
-            font-family: 'JetBrains Mono', monospace;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        input:focus { border-color: var(--primary); outline: none; }
-
-        .btn {
-            background: var(--primary);
-            color: black;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: 800;
-            cursor: pointer;
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: transform 0.2s;
-        }
-
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-
-        .btn:disabled { background: #4A5568; cursor: not-allowed; }
-
-        #timer {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            color: var(--primary);
-        }
-
+        :root { --primary: #FFB800; --bg: #0d0d0d; --card: #161616; }
+        body { background: var(--bg); color: #e0e0e0; font-family: 'Outfit', sans-serif; margin: 0; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 20px; }
+        .card { background: var(--card); padding: 30px; border-radius: 8px; border: 1px solid #222; margin-bottom: 20px; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #333; color: #fff; padding: 12px; margin: 10px 0; border-radius: 4px; box-sizing: border-box; }
+        .btn { background: var(--primary); color: #000; padding: 15px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .q-box { border-left: 4px solid var(--primary); padding-left: 15px; margin-bottom: 20px; }
+        .mark-label { color: var(--primary); font-size: 0.8rem; font-weight: bold; }
         .hidden { display: none; }
-
-        /* AI Detection Visuals */
-        .ai-status {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
 
-    <div id="cheat-overlay">
-        <h1 style="font-size: 4rem;">AMARAN!</h1>
-        <p>Aktiviti mencurigakan dikesan. Sila kekal di dalam tab peperiksaan.</p>
-        <button class="btn" style="width: 200px;" onclick="hideOverlay()">SAYA FAHAM</button>
+<div class="container">
+    <div id="login-screen" class="card">
+        <h2 style="color: var(--primary)">PENGURUSAN KOKURIKULUM (MPU2071)</h2>
+        <p>Sila masukkan No. Kad Pengenalan untuk memulakan kuiz.</p>
+        <input type="text" id="ic-field" placeholder="Contoh: 010114-03-0523">
+        <button class="btn" onclick="masukSistem()">MULA UJIAN</button>
     </div>
 
-    <header class="header">
-        <div>
-            <h2 style="margin:0; font-weight: 800; letter-spacing: -1px;">MPU2071 <span style="color: var(--primary);">PDPP</span></h2>
+    <div id="exam-screen" class="hidden">
+        <div class="card">
+            <div id="timer" style="text-align:right; color:var(--primary); font-family: 'JetBrains Mono'">30:00</div>
+            
+            <div class="q-box">
+                <p>1. Berikan 5 matlamat kokurikulum yang ingin dicapai selaras dengan Falsafah Pendidikan Negara.</p>
+                <span class="mark-label">(5 Markah)</span>
+                <textarea id="q1" rows="4"></textarea>
+            </div>
+
+            <div class="q-box">
+                <p>2. Binakan satu struktur organisasi Persatuan Sejarah di sekolah anda.</p>
+                <span class="mark-label">(4 Markah)</span>
+                <textarea id="q2" rows="4"></textarea>
+            </div>
+
+            <div class="q-box">
+                <p>3. Nyatakan kelompok-kelompok gerak kerja kokurikulum sekolah dan berikan contoh setiap kategori.</p>
+                <span class="mark-label">(6 Markah)</span>
+                <textarea id="q3" rows="4"></textarea>
+            </div>
+
+            <div class="q-box">
+                <p>4. Nyatakan 5 tugas seorang Bendahari dalam Pasukan Kadet Remaja Sekolah.</p>
+                <span class="mark-label">(5 Markah)</span>
+                <textarea id="q4" rows="4"></textarea>
+            </div>
+
+            <button class="btn" onclick="hantarSemua()">HANTAR JAWAPAN & JANA PDF</button>
         </div>
-        <div id="timer-container" class="hidden">
-            <span id="timer">30:00</span>
-        </div>
-    </header>
+    </div>
 
-    <main style="max-width: 800px; margin: 3rem auto; width: 90%;">
+    <div id="success-screen" class="hidden card" style="text-align: center;">
+        <h2 style="color: #00ff88">JAWAPAN BERJAYA DIHANTAR</h2>
+        <p>Sila simpan fail PDF yang telah dimuat turun.</p>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "GANTIKAN_DENGAN_URL_WEB_APP_BARU_ANDA";
+    let dataPelajar = {};
+    let timeLeft = 1800;
+
+    async function masukSistem() {
+        const ic = document.getElementById('ic-field').value;
+        const res = await fetch(`${SCRIPT_URL}?action=login&ic=${ic}`);
+        const json = await res.json();
+
+        if(json.result === "success") {
+            dataPelajar = json.data;
+            dataPelajar.ic = ic;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            startTimer();
+        } else {
+            alert("Ralat: IC tidak dijumpai atau sudah menjawab.");
+        }
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            timeLeft--;
+            const m = Math.floor(timeLeft/60);
+            const s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if(timeLeft <= 0) hantarSemua();
+        }, 1000);
+    }
+
+    async function hantarSemua() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
         
-        <section id="login-section" class="card">
-            <h1 style="margin-top:0;">Daftar Masuk Calon</h1>
-            <p style="color: #718096; margin-bottom: 2rem;">Sila masukkan No. Kad Pengenalan tanpa tanda sempang (-) untuk pengesahan automatik.</p>
-            
-            <div class="input-group">
-                <label>Nombor Kad Pengenalan</label>
-                <input type="text" id="ic-field" placeholder="Contoh: 900101015566">
-            </div>
-            
-            <button class="btn" id="login-btn" onclick="authStudent()">Mula Peperiksaan</button>
-            <p id="error-msg" class="hidden" style="color: var(--danger); font-size: 0.8rem; margin-top: 1rem;">Ralat: IC tidak dijumpai atau anda telah menjawab.</p>
-        </section>
-
-        <section id="exam-section" class="hidden">
-            <div class="card" style="border-left: 4px solid var(--primary); margin-bottom: 2rem;">
-                <p style="font-size: 0.8rem; opacity: 0.6; margin: 0;">SOALAN STRUKTUR</p>
-                <h3 id="question-text">Bincangkan cabaran pengajaran dan pembelajaran (PdP) dalam era digital serta implikasinya terhadap etika akademik pelajar masa kini.</h3>
-            </div>
-
-            <div class="input-group">
-                <div style="display:flex; justify-content: space-between; align-items: flex-end;">
-                    <label>Ruang Jawapan</label>
-                    <span class="ai-status">WPM: <span id="wpm">0</span> | AI Prob: <span id="ai-prob">Low</span></span>
-                </div>
-                <textarea id="answer-area" rows="12" placeholder="Taip jawapan anda di sini..."></textarea>
-            </div>
-
-            <button class="btn" onclick="confirmSubmit()">Hantar Jawapan Sekarang</button>
-        </section>
-
-        <section id="success-section" class="hidden card" style="text-align: center;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
-            <h1>Jawapan Diterima</h1>
-            <p id="success-msg"></p>
-            <p style="font-size: 0.8rem; color: #718096;">Fail PDF telah dijana dan dihantar ke emel pensyarah anda.</p>
-        </section>
-
-    </main>
-
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc9TCcijrCfZBuqDzBWp3qSrBEZCqBUfQVz4CWGHWF91iaEw-OoLjFfPTZWOf0KEzZIQ/exec";
+        doc.setFontSize(14);
+        doc.text("SKRIP JAWAPAN KUIZ MPU2071", 105, 20, {align: 'center'});
+        doc.setFontSize(10);
+        doc.text(`Nama: ${dataPelajar.nama}`, 20, 40);
+        doc.text(`Matrik: ${dataPelajar.no_matrik}`, 20, 45);
+        doc.text(`Pensyarah: ${dataPelajar.nama_pensyarah}`, 20, 50);
         
-        let student = null;
-        let timer;
-        let timeLeft = 1800;
-        let violations = 0;
-        let startTime;
+        const q1 = document.getElementById('q1').value;
+        const q2 = document.getElementById('q2').value;
+        const q3 = document.getElementById('q3').value;
+        const q4 = document.getElementById('q4').value;
 
-        // 1. Authenticate Student
-        async function authStudent() {
-            const ic = document.getElementById('ic-field').value;
-            const btn = document.getElementById('login-btn');
-            const error = document.getElementById('error-msg');
+        doc.text("Jawapan 1:", 20, 60); doc.text(doc.splitTextToSize(q1, 170), 20, 65);
+        doc.text("Jawapan 2:", 20, 100); doc.text(doc.splitTextToSize(q2, 170), 20, 105);
+        doc.text("Jawapan 3:", 20, 140); doc.text(doc.splitTextToSize(q3, 170), 20, 145);
+        doc.text("Jawapan 4:", 20, 180); doc.text(doc.splitTextToSize(q4, 170), 20, 185);
 
-            btn.disabled = true;
-            btn.innerText = "Mengesahkan...";
+        doc.save(`MPU2071_${dataPelajar.no_matrik}.pdf`);
 
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=login&ic=${ic}`);
-                const data = await response.json();
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({action: 'submit', ic: dataPelajar.ic})
+        });
 
-                if (data.result === "success" && data.data.status !== "SUDAH JAWAB") {
-                    student = data.data;
-                    student.ic = ic;
-                    showExam();
-                } else {
-                    error.classList.remove('hidden');
-                }
-            } catch (e) {
-                alert("Ralat sistem. Sila cuba lagi.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Mula Peperiksaan";
-            }
-        }
-
-        // 2. Start Exam UI
-        function showExam() {
-            document.getElementById('login-section').classList.add('hidden');
-            document.getElementById('exam-section').classList.remove('hidden');
-            document.getElementById('timer-container').classList.remove('hidden');
-            
-            startTime = Date.now();
-            initTimer();
-            initSecurity();
-        }
-
-        // 3. Security & AI Detection
-        function initSecurity() {
-            // Anti-Tab Switch
-            window.onblur = () => {
-                violations++;
-                document.getElementById('cheat-overlay').style.display = 'flex';
-                if(violations >= 3) finalizeExam();
-            };
-
-            // Anti-Paste
-            document.getElementById('answer-area').addEventListener('paste', (e) => {
-                e.preventDefault();
-                alert("Tindakan 'Paste' dilarang. Sila taip secara manual.");
-                violations++;
-            });
-
-            // WPM Tracker (AI Detection)
-            document.getElementById('answer-area').addEventListener('input', (e) => {
-                const words = e.target.value.trim().split(/\s+/).length;
-                const minutes = (Date.now() - startTime) / 60000;
-                const wpm = Math.round(words / minutes);
-                document.getElementById('wpm').innerText = wpm;
-                
-                if(wpm > 100) {
-                    document.getElementById('ai-prob').innerText = "High";
-                    document.getElementById('ai-prob').style.color = "var(--danger)";
-                }
-            });
-        }
-
-        function hideOverlay() {
-            document.getElementById('cheat-overlay').style.display = 'none';
-        }
-
-        // 4. Timer Logic
-        function initTimer() {
-            timer = setInterval(() => {
-                timeLeft--;
-                const m = Math.floor(timeLeft / 60);
-                const s = timeLeft % 60;
-                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                if (timeLeft <= 0) finalizeExam();
-            }, 1000);
-        }
-
-        // 5. Submit & PDF
-        async function finalizeExam() {
-            clearInterval(timer);
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Generate PDF Content
-            doc.setFontSize(18);
-            doc.text("SKRIP JAWAPAN PEPERIKSAAN (RASMI)", 105, 20, { align: "center" });
-            doc.setFontSize(10);
-            doc.text(`NAMA: ${student.nama}`, 20, 40);
-            doc.text(`NO. MATRIK: ${student.no_matrik}`, 20, 48);
-            doc.text(`KELAS: ${student.kelas}`, 20, 56);
-            doc.text(`PENSYARAH: ${student.nama_pensyarah}`, 20, 64);
-            doc.text(`----------------------------------------------------------`, 20, 72);
-            
-            const ans = document.getElementById('answer-area').value;
-            const splitAns = doc.splitTextToSize(ans, 170);
-            doc.text(splitAns, 20, 85);
-            
-            doc.setTextColor(200, 0, 0);
-            doc.text(`SECURITY LOG: VIOLATIONS: ${violations} | AVG WPM: ${document.getElementById('wpm').innerText}`, 20, 280);
-
-            doc.save(`Jawapan_${student.no_matrik}.pdf`);
-
-            // Update Status di Google Sheet
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: 'submit', ic: student.ic })
-            });
-
-            document.getElementById('exam-section').classList.add('hidden');
-            document.getElementById('success-section').classList.remove('hidden');
-            document.getElementById('success-msg').innerText = `Terima kasih, ${student.nama}.`;
-        }
-
-        function confirmSubmit() {
-            if(confirm("Adakah anda pasti mahu menghantar jawapan?")) finalizeExam();
-        }
-    </script>
+        document.getElementById('exam-screen').classList.add('hidden');
+        document.getElementById('success-screen').classList.remove('hidden');
+    }
+</script>
 </body>
 </html>
