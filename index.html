@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE ASSESS - MP2071 PDPP</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/framer-motion/10.16.4/framer-motion.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --accent: #FFB800;
+            --danger: #ff4444;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Industrial UI Style */
+        .terminal-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0d0d0d;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px #00ff88;
+            margin-right: 10px;
+        }
+
+        .main-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: var(--accent);
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--accent);
+            padding: 15px;
+            margin: 10px 0;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
+        }
+
+        #timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .violation-msg {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 10px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-header">
+        <div><span class="status-dot"></span> SYSTEM ACTIVE: MP2071_PDPP</div>
+        <div id="timer-display" class="hidden">Masa: <span id="timer">30:00</span></div>
+    </div>
+
+    <div class="main-container">
+        
+        <div id="login-section" class="card">
+            <h1 style="font-family: 'Bebas Neue'; font-size: 3rem; margin: 0;">LOG MASUK CALON</h1>
+            <p style="color: #666; font-size: 0.9rem;">Sila masukkan No. Kad Pengenalan untuk pengesahan pangkalan data.</p>
+            
+            <input type="text" id="ic-input" placeholder="NO. KAD PENGENALAN (CONTOH: 900101015566)">
+            <button class="btn" onclick="validateStudent()">Sahkan Identiti</button>
+            <div id="login-error" class="violation-msg hidden">Ralat: Pelajar tidak dijumpai atau sudah menjawab.</div>
+        </div>
+
+        <div id="exam-section" class="hidden">
+            <div class="card" style="margin-bottom: 20px; background: rgba(255, 184, 0, 0.05);">
+                <p style="font-size: 0.7rem; color: var(--accent);">NAMA: <span id="display-nama"></span> | MATRIK: <span id="display-matrik"></span></p>
+                <h2 style="margin: 10px 0;">SOALAN STRUKTUR:</h2>
+                <p>Jelaskan peranan teknologi dalam transformasi pendidikan masa kini dan bagaimana ia mempengaruhi etika akademik pelajar.</p>
+            </div>
+
+            <textarea id="answer-area" rows="15" placeholder="Tulis jawapan anda secara jujur..."></textarea>
+            
+            <div id="stats-bar" style="display: flex; gap: 20px; font-size: 0.7rem; color: #555; margin-top: 10px;">
+                <span>WPM: <span id="wpm-counter">0</span></span>
+                <span>AMARAN: <span id="warn-counter">0/3</span></span>
+            </div>
+
+            <button class="btn" style="margin-top: 20px;" onclick="finalizeExam()">Hantar Jawapan</button>
+        </div>
+
+        <div id="success-section" class="hidden card" style="text-align: center;">
+            <h1 style="color: #00ff88;">BERJAYA DIHANTAR</h1>
+            <p>Fail PDF telah dijana dan log audit telah dihantar kepada pensyarah anda.</p>
+            <p id="lecturer-info" style="font-size: 0.8rem; color: #666;"></p>
+        </div>
+
+    </div>
+
+    <script>
+        // KONFIGURASI - Masukkan URL Apps Script anda di sini
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc9TCcijrCfZBuqDzBWp3qSrBEZCqBUfQVz4CWGHWF91iaEw-OoLjFfPTZWOf0KEzZIQ/exec";
+        
+        let studentData = {};
+        let violations = 0;
+        let timeLeft = 1800;
+        let timerInterval;
+        let startTime;
+
+        // 1. Validasi Pelajar dari Google Sheet
+        async function validateStudent() {
+            const ic = document.getElementById('ic-input').value;
+            if(!ic) return;
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=login&ic=${ic}`);
+                const result = await response.json();
+
+                if(result.result === "success" && result.data.status !== "SUDAH JAWAB") {
+                    studentData = result.data;
+                    studentData.no_ic = ic;
+                    startExam();
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            } catch (e) {
+                alert("Ralat sambungan pangkalan data.");
+            }
+        }
+
+        // 2. Mula Ujian
+        function startExam() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('exam-section').classList.remove('hidden');
+            document.getElementById('timer-display').classList.remove('hidden');
+            
+            document.getElementById('display-nama').innerText = studentData.nama;
+            document.getElementById('display-matrik').innerText = studentData.no_matrik;
+            
+            startTime = Date.now();
+            startTimer();
+            setupAntiCheat();
+        }
+
+        // 3. Anti-Cheat Logic
+        function setupAntiCheat() {
+            window.onblur = () => {
+                violations++;
+                document.getElementById('warn-counter').innerText = `${violations}/3`;
+                if(violations >= 3) {
+                    alert("Tamat! Pelanggaran dikesan melebihi had.");
+                    finalizeExam();
+                } else {
+                    alert("AMARAN: Jangan tinggalkan tab ujian!");
+                }
+            };
+
+            document.getElementById('answer-area').onpaste = (e) => {
+                e.preventDefault();
+                alert("Fungsi Paste dilarang!");
+                violations++;
+            };
+        }
+
+        // 4. Timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let mins = Math.floor(timeLeft / 60);
+                let secs = timeLeft % 60;
+                document.getElementById('timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finalizeExam();
+                }
+            }, 1000);
+        }
+
+        // 5. Finalize & PDF
+        async function finalizeExam() {
+            clearInterval(timerInterval);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Generate PDF
+            doc.text("SKRIP JAWAPAN PEPERIKSAAN", 20, 20);
+            doc.setFontSize(10);
+            doc.text(`Nama: ${studentData.nama}`, 20, 40);
+            doc.text(`IC: ${studentData.no_ic}`, 20, 50);
+            doc.text(`Matrik: ${studentData.no_matrik}`, 20, 60);
+            doc.text(`Kelas: ${studentData.kelas}`, 20, 70);
+            doc.text(`Pensyarah: ${studentData.nama_pensyarah}`, 20, 80);
+            doc.text(`---------------------------------------`, 20, 90);
+            
+            const jawapan = document.getElementById('answer-area').value;
+            const splitTxt = doc.splitTextToSize(jawapan, 170);
+            doc.text(splitTxt, 20, 100);
+            
+            doc.setTextColor(255, 0, 0);
+            doc.text(`AUDIT: Violations: ${violations}`, 20, 280);
+            
+            doc.save(`Jawapan_${studentData.no_matrik}.pdf`);
+
+            // Update Status di Google Sheet
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'submit', ic: studentData.no_ic })
+            });
+
+            document.getElementById('exam-section').classList.add('hidden');
+            document.getElementById('success-section').classList.remove('hidden');
+            document.getElementById('lecturer-info').innerText = `Emel dihantar ke: ${studentData.emel_pensyarah}`;
+        }
+    </script>
+</body>
+</html>
