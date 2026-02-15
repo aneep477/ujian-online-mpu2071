@@ -3,283 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECURE ASSESS - MP2071 PDPP</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <title>SISTEM UJIAN MPU2071 PDPP</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/framer-motion/10.16.4/framer-motion.js"></script>
     <style>
         :root {
-            --bg: #0a0a0a;
-            --accent: #FFB800;
-            --danger: #ff4444;
-            --glass: rgba(255, 255, 255, 0.05);
+            --primary: #FFB800;
+            --bg: #0F1115;
+            --surface: #16191E;
+            --text: #E2E8F0;
+            --danger: #FF4B4B;
         }
 
         body {
             background-color: var(--bg);
-            color: #e0e0e0;
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
             margin: 0;
-            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100-vh;
         }
 
-        /* Industrial UI Style */
-        .terminal-header {
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 1rem 2rem;
+        /* Anti-Cheat Overlay */
+        #cheat-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 75, 75, 0.9);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--surface);
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #0d0d0d;
+            background: rgba(15, 17, 21, 0.8);
+            backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
-            z-index: 100;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 10px #00ff88;
-            margin-right: 10px;
-        }
-
-        .main-container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
         }
 
         .card {
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 4px;
-            position: relative;
+            background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
         }
 
-        .card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0;
-            width: 4px; height: 100%;
-            background: var(--accent);
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 700;
         }
 
         input, textarea {
             width: 100%;
-            background: #000;
-            border: 1px solid #333;
-            color: var(--accent);
-            padding: 15px;
-            margin: 10px 0;
-            font-family: inherit;
+            background: #090B0E;
+            border: 1px solid #2D3748;
+            border-radius: 8px;
+            padding: 1rem;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
             box-sizing: border-box;
+            transition: border-color 0.2s;
         }
 
-        input:focus, textarea:focus {
-            border-color: var(--accent);
-            outline: none;
-        }
+        input:focus { border-color: var(--primary); outline: none; }
 
         .btn {
-            background: var(--accent);
-            color: #000;
+            background: var(--primary);
+            color: black;
+            padding: 1rem 2rem;
+            border-radius: 8px;
             border: none;
-            padding: 15px 30px;
-            font-weight: bold;
+            font-weight: 800;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
             width: 100%;
-            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s;
         }
 
-        .btn:hover {
-            filter: brightness(1.2);
-            box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
-        }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .btn:disabled { background: #4A5568; cursor: not-allowed; }
 
         #timer {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .violation-msg {
-            color: var(--danger);
-            font-size: 0.8rem;
-            margin-top: 10px;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            color: var(--primary);
         }
 
         .hidden { display: none; }
+
+        /* AI Detection Visuals */
+        .ai-status {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="terminal-header">
-        <div><span class="status-dot"></span> SYSTEM ACTIVE: MP2071_PDPP</div>
-        <div id="timer-display" class="hidden">Masa: <span id="timer">30:00</span></div>
+    <div id="cheat-overlay">
+        <h1 style="font-size: 4rem;">AMARAN!</h1>
+        <p>Aktiviti mencurigakan dikesan. Sila kekal di dalam tab peperiksaan.</p>
+        <button class="btn" style="width: 200px;" onclick="hideOverlay()">SAYA FAHAM</button>
     </div>
 
-    <div class="main-container">
+    <header class="header">
+        <div>
+            <h2 style="margin:0; font-weight: 800; letter-spacing: -1px;">MPU2071 <span style="color: var(--primary);">PDPP</span></h2>
+        </div>
+        <div id="timer-container" class="hidden">
+            <span id="timer">30:00</span>
+        </div>
+    </header>
+
+    <main style="max-width: 800px; margin: 3rem auto; width: 90%;">
         
-        <div id="login-section" class="card">
-            <h1 style="font-family: 'Bebas Neue'; font-size: 3rem; margin: 0;">LOG MASUK CALON</h1>
-            <p style="color: #666; font-size: 0.9rem;">Sila masukkan No. Kad Pengenalan untuk pengesahan pangkalan data.</p>
+        <section id="login-section" class="card">
+            <h1 style="margin-top:0;">Daftar Masuk Calon</h1>
+            <p style="color: #718096; margin-bottom: 2rem;">Sila masukkan No. Kad Pengenalan tanpa tanda sempang (-) untuk pengesahan automatik.</p>
             
-            <input type="text" id="ic-input" placeholder="NO. KAD PENGENALAN (CONTOH: 900101015566)">
-            <button class="btn" onclick="validateStudent()">Sahkan Identiti</button>
-            <div id="login-error" class="violation-msg hidden">Ralat: Pelajar tidak dijumpai atau sudah menjawab.</div>
-        </div>
+            <div class="input-group">
+                <label>Nombor Kad Pengenalan</label>
+                <input type="text" id="ic-field" placeholder="Contoh: 900101015566">
+            </div>
+            
+            <button class="btn" id="login-btn" onclick="authStudent()">Mula Peperiksaan</button>
+            <p id="error-msg" class="hidden" style="color: var(--danger); font-size: 0.8rem; margin-top: 1rem;">Ralat: IC tidak dijumpai atau anda telah menjawab.</p>
+        </section>
 
-        <div id="exam-section" class="hidden">
-            <div class="card" style="margin-bottom: 20px; background: rgba(255, 184, 0, 0.05);">
-                <p style="font-size: 0.7rem; color: var(--accent);">NAMA: <span id="display-nama"></span> | MATRIK: <span id="display-matrik"></span></p>
-                <h2 style="margin: 10px 0;">SOALAN STRUKTUR:</h2>
-                <p>Jelaskan peranan teknologi dalam transformasi pendidikan masa kini dan bagaimana ia mempengaruhi etika akademik pelajar.</p>
+        <section id="exam-section" class="hidden">
+            <div class="card" style="border-left: 4px solid var(--primary); margin-bottom: 2rem;">
+                <p style="font-size: 0.8rem; opacity: 0.6; margin: 0;">SOALAN STRUKTUR</p>
+                <h3 id="question-text">Bincangkan cabaran pengajaran dan pembelajaran (PdP) dalam era digital serta implikasinya terhadap etika akademik pelajar masa kini.</h3>
             </div>
 
-            <textarea id="answer-area" rows="15" placeholder="Tulis jawapan anda secara jujur..."></textarea>
-            
-            <div id="stats-bar" style="display: flex; gap: 20px; font-size: 0.7rem; color: #555; margin-top: 10px;">
-                <span>WPM: <span id="wpm-counter">0</span></span>
-                <span>AMARAN: <span id="warn-counter">0/3</span></span>
+            <div class="input-group">
+                <div style="display:flex; justify-content: space-between; align-items: flex-end;">
+                    <label>Ruang Jawapan</label>
+                    <span class="ai-status">WPM: <span id="wpm">0</span> | AI Prob: <span id="ai-prob">Low</span></span>
+                </div>
+                <textarea id="answer-area" rows="12" placeholder="Taip jawapan anda di sini..."></textarea>
             </div>
 
-            <button class="btn" style="margin-top: 20px;" onclick="finalizeExam()">Hantar Jawapan</button>
-        </div>
+            <button class="btn" onclick="confirmSubmit()">Hantar Jawapan Sekarang</button>
+        </section>
 
-        <div id="success-section" class="hidden card" style="text-align: center;">
-            <h1 style="color: #00ff88;">BERJAYA DIHANTAR</h1>
-            <p>Fail PDF telah dijana dan log audit telah dihantar kepada pensyarah anda.</p>
-            <p id="lecturer-info" style="font-size: 0.8rem; color: #666;"></p>
-        </div>
+        <section id="success-section" class="hidden card" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+            <h1>Jawapan Diterima</h1>
+            <p id="success-msg"></p>
+            <p style="font-size: 0.8rem; color: #718096;">Fail PDF telah dijana dan dihantar ke emel pensyarah anda.</p>
+        </section>
 
-    </div>
+    </main>
 
     <script>
-        // KONFIGURASI - Masukkan URL Apps Script anda di sini
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyc9TCcijrCfZBuqDzBWp3qSrBEZCqBUfQVz4CWGHWF91iaEw-OoLjFfPTZWOf0KEzZIQ/exec";
         
-        let studentData = {};
-        let violations = 0;
+        let student = null;
+        let timer;
         let timeLeft = 1800;
-        let timerInterval;
+        let violations = 0;
         let startTime;
 
-        // 1. Validasi Pelajar dari Google Sheet
-        async function validateStudent() {
-            const ic = document.getElementById('ic-input').value;
-            if(!ic) return;
+        // 1. Authenticate Student
+        async function authStudent() {
+            const ic = document.getElementById('ic-field').value;
+            const btn = document.getElementById('login-btn');
+            const error = document.getElementById('error-msg');
+
+            btn.disabled = true;
+            btn.innerText = "Mengesahkan...";
 
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=login&ic=${ic}`);
-                const result = await response.json();
+                const data = await response.json();
 
-                if(result.result === "success" && result.data.status !== "SUDAH JAWAB") {
-                    studentData = result.data;
-                    studentData.no_ic = ic;
-                    startExam();
+                if (data.result === "success" && data.data.status !== "SUDAH JAWAB") {
+                    student = data.data;
+                    student.ic = ic;
+                    showExam();
                 } else {
-                    document.getElementById('login-error').classList.remove('hidden');
+                    error.classList.remove('hidden');
                 }
             } catch (e) {
-                alert("Ralat sambungan pangkalan data.");
+                alert("Ralat sistem. Sila cuba lagi.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Mula Peperiksaan";
             }
         }
 
-        // 2. Mula Ujian
-        function startExam() {
+        // 2. Start Exam UI
+        function showExam() {
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('exam-section').classList.remove('hidden');
-            document.getElementById('timer-display').classList.remove('hidden');
-            
-            document.getElementById('display-nama').innerText = studentData.nama;
-            document.getElementById('display-matrik').innerText = studentData.no_matrik;
+            document.getElementById('timer-container').classList.remove('hidden');
             
             startTime = Date.now();
-            startTimer();
-            setupAntiCheat();
+            initTimer();
+            initSecurity();
         }
 
-        // 3. Anti-Cheat Logic
-        function setupAntiCheat() {
+        // 3. Security & AI Detection
+        function initSecurity() {
+            // Anti-Tab Switch
             window.onblur = () => {
                 violations++;
-                document.getElementById('warn-counter').innerText = `${violations}/3`;
-                if(violations >= 3) {
-                    alert("Tamat! Pelanggaran dikesan melebihi had.");
-                    finalizeExam();
-                } else {
-                    alert("AMARAN: Jangan tinggalkan tab ujian!");
-                }
+                document.getElementById('cheat-overlay').style.display = 'flex';
+                if(violations >= 3) finalizeExam();
             };
 
-            document.getElementById('answer-area').onpaste = (e) => {
+            // Anti-Paste
+            document.getElementById('answer-area').addEventListener('paste', (e) => {
                 e.preventDefault();
-                alert("Fungsi Paste dilarang!");
+                alert("Tindakan 'Paste' dilarang. Sila taip secara manual.");
                 violations++;
-            };
+            });
+
+            // WPM Tracker (AI Detection)
+            document.getElementById('answer-area').addEventListener('input', (e) => {
+                const words = e.target.value.trim().split(/\s+/).length;
+                const minutes = (Date.now() - startTime) / 60000;
+                const wpm = Math.round(words / minutes);
+                document.getElementById('wpm').innerText = wpm;
+                
+                if(wpm > 100) {
+                    document.getElementById('ai-prob').innerText = "High";
+                    document.getElementById('ai-prob').style.color = "var(--danger)";
+                }
+            });
         }
 
-        // 4. Timer
-        function startTimer() {
-            timerInterval = setInterval(() => {
+        function hideOverlay() {
+            document.getElementById('cheat-overlay').style.display = 'none';
+        }
+
+        // 4. Timer Logic
+        function initTimer() {
+            timer = setInterval(() => {
                 timeLeft--;
-                let mins = Math.floor(timeLeft / 60);
-                let secs = timeLeft % 60;
-                document.getElementById('timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                
-                if(timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    finalizeExam();
-                }
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                if (timeLeft <= 0) finalizeExam();
             }, 1000);
         }
 
-        // 5. Finalize & PDF
+        // 5. Submit & PDF
         async function finalizeExam() {
-            clearInterval(timerInterval);
+            clearInterval(timer);
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Generate PDF
-            doc.text("SKRIP JAWAPAN PEPERIKSAAN", 20, 20);
+            // Generate PDF Content
+            doc.setFontSize(18);
+            doc.text("SKRIP JAWAPAN PEPERIKSAAN (RASMI)", 105, 20, { align: "center" });
             doc.setFontSize(10);
-            doc.text(`Nama: ${studentData.nama}`, 20, 40);
-            doc.text(`IC: ${studentData.no_ic}`, 20, 50);
-            doc.text(`Matrik: ${studentData.no_matrik}`, 20, 60);
-            doc.text(`Kelas: ${studentData.kelas}`, 20, 70);
-            doc.text(`Pensyarah: ${studentData.nama_pensyarah}`, 20, 80);
-            doc.text(`---------------------------------------`, 20, 90);
+            doc.text(`NAMA: ${student.nama}`, 20, 40);
+            doc.text(`NO. MATRIK: ${student.no_matrik}`, 20, 48);
+            doc.text(`KELAS: ${student.kelas}`, 20, 56);
+            doc.text(`PENSYARAH: ${student.nama_pensyarah}`, 20, 64);
+            doc.text(`----------------------------------------------------------`, 20, 72);
             
-            const jawapan = document.getElementById('answer-area').value;
-            const splitTxt = doc.splitTextToSize(jawapan, 170);
-            doc.text(splitTxt, 20, 100);
+            const ans = document.getElementById('answer-area').value;
+            const splitAns = doc.splitTextToSize(ans, 170);
+            doc.text(splitAns, 20, 85);
             
-            doc.setTextColor(255, 0, 0);
-            doc.text(`AUDIT: Violations: ${violations}`, 20, 280);
-            
-            doc.save(`Jawapan_${studentData.no_matrik}.pdf`);
+            doc.setTextColor(200, 0, 0);
+            doc.text(`SECURITY LOG: VIOLATIONS: ${violations} | AVG WPM: ${document.getElementById('wpm').innerText}`, 20, 280);
+
+            doc.save(`Jawapan_${student.no_matrik}.pdf`);
 
             // Update Status di Google Sheet
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                body: JSON.stringify({ action: 'submit', ic: studentData.no_ic })
+                body: JSON.stringify({ action: 'submit', ic: student.ic })
             });
 
             document.getElementById('exam-section').classList.add('hidden');
             document.getElementById('success-section').classList.remove('hidden');
-            document.getElementById('lecturer-info').innerText = `Emel dihantar ke: ${studentData.emel_pensyarah}`;
+            document.getElementById('success-msg').innerText = `Terima kasih, ${student.nama}.`;
+        }
+
+        function confirmSubmit() {
+            if(confirm("Adakah anda pasti mahu menghantar jawapan?")) finalizeExam();
         }
     </script>
 </body>
