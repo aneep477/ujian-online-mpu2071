@@ -2,86 +2,106 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>UJIAN MPU2071 - IPG KAMPUS DARULAMAN</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUIZ MPU2071 - IPG KAMPUS DARULAMAN</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --accent: #FFB800; --bg: #0d0d0d; --card: #1a1a1a; }
-        body { background: var(--bg); color: #e0e0e0; font-family: sans-serif; margin: 0; padding: 20px; }
-        .card { background: var(--card); padding: 30px; border-radius: 12px; max-width: 850px; margin: auto; border: 1px solid #333; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 15px; margin: 10px 0; border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--accent); color: #000; padding: 18px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 1rem; }
+        :root { --accent: #FFB800; --bg: #121417; --card: #1E2126; }
+        body { background: var(--bg); color: #E2E8F0; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid #2D3748; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .header { border-bottom: 2px solid var(--accent); margin-bottom: 25px; padding-bottom: 10px; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 15px; margin: 10px 0; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .btn { background: var(--accent); color: #000; padding: 18px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; font-size: 1rem; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:disabled { background: #4A5568; cursor: not-allowed; }
         .q-box { border-left: 4px solid var(--accent); padding-left: 20px; margin-top: 30px; }
         .markah { color: var(--accent); font-size: 0.8rem; font-weight: bold; }
+        #timer { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="login-zone" class="card">
-    <h2 style="color: var(--accent)">LOG MASUK CALON MPU2071</h2>
-    <p>Masukkan No. Kad Pengenalan anda (Contoh: 981016-06-5935)</p>
-    <input type="text" id="ic-field" placeholder="No. Kad Pengenalan">
-    <button class="btn" id="login-btn" onclick="prosesMasuk()">MULA UJIAN</button>
-</div>
-
-<div id="exam-zone" class="card hidden">
-    <div style="display:flex; justify-content:space-between; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px;">
-        <div id="info-pelajar"></div>
-        <div id="timer" style="color: var(--accent); font-weight:bold; font-size:1.2rem;">30:00</div>
+<div class="container">
+    <div id="login-zone" class="card">
+        <h2 class="header">LOG MASUK CALON (MPU2071)</h2>
+        <p>Sila masukkan No. Kad Pengenalan untuk pengesahan.</p>
+        <input type="text" id="ic-field" placeholder="Contoh: 981016065935">
+        <button class="btn" id="btn-login" onclick="mulaLogMasuk()">SAHKAN & MULA UJIAN</button>
+        <p id="msg-error" class="hidden" style="color: #F56565; margin-top: 15px;">Ralat: IC tidak dijumpai atau anda telah menjawab.</p>
     </div>
 
-    <div class="q-box">
-        <p>1. Berikan 5 matlamat kokurikulum yang ingin dicapai selaras dengan Falsafah Pendidikan Negara. <span class="markah">(5 Markah)</span></p>
-        <textarea id="ans1" rows="4"></textarea>
+    <div id="exam-zone" class="card hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <div>
+                <div id="nama-pelajar" style="font-weight:bold; font-size: 1.2rem;"></div>
+                <div id="matrik-pelajar" style="font-size: 0.9rem; opacity: 0.7;"></div>
+            </div>
+            <div id="timer">30:00</div>
+        </div>
+
+        <div class="q-box">
+            <p>1. Berikan 5 matlamat kokurikulum yang ingin dicapai selaras dengan Falsafah Pendidikan Negara. <span class="markah">(5 Markah)</span></p>
+            <textarea id="ans1" rows="4" placeholder="Tulis jawapan anda..."></textarea>
+        </div>
+
+        <div class="q-box">
+            <p>2. Binakan satu struktur organisasi Persatuan Sejarah di sekolah anda. <span class="markah">(4 Markah)</span></p>
+            <textarea id="ans2" rows="4" placeholder="Tulis jawapan anda..."></textarea>
+        </div>
+
+        <div class="q-box">
+            <p>3. Nyatakan kelompok-kelompok gerak kerja kokurikulum sekolah dan berikan contoh setiap kategori. <span class="markah">(6 Markah)</span></p>
+            <textarea id="ans3" rows="5" placeholder="Tulis jawapan anda..."></textarea>
+        </div>
+
+        <div class="q-box">
+            <p>4. Nyatakan 5 tugas seorang Bendahari dalam Pasukan Kadet Remaja Sekolah. <span class="markah">(5 Markah)</span></p>
+            <textarea id="ans4" rows="4" placeholder="Tulis jawapan anda..."></textarea>
+        </div>
+
+        <button class="btn" style="margin-top: 40px;" onclick="hantarUjian()">HANTAR SEMUA JAWAPAN</button>
     </div>
 
-    <div class="q-box">
-        <p>2. Binakan satu struktur organisasi Persatuan Sejarah di sekolah anda. <span class="markah">(4 Markah)</span></p>
-        <textarea id="ans2" rows="4"></textarea>
+    <div id="success-zone" class="card hidden" style="text-align: center;">
+        <h1 style="color: #48BB78;">BERJAYA DIHANTAR</h1>
+        <p>Terima kasih. Fail PDF telah dijana dan status anda telah dikemaskini.</p>
+        <button class="btn" style="width: 200px;" onclick="location.reload()">KEMBALI</button>
     </div>
-
-    <div class="q-box">
-        <p>3. Nyatakan kelompok-kelompok gerak kerja kokurikulum sekolah dan berikan contoh setiap kategori. <span class="markah">(6 Markah)</span></p>
-        <textarea id="ans3" rows="4"></textarea>
-    </div>
-
-    <div class="q-box">
-        <p>4. Nyatakan 5 tugas seorang Bendahari dalam Pasukan Kadet Remaja Sekolah. <span class="markah">(5 Markah)</span></p>
-        <textarea id="ans4" rows="4"></textarea>
-    </div>
-
-    <button class="btn" onclick="hantarUjian()" style="margin-top: 30px;">HANTAR JAWAPAN & JANA PDF</button>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyetp-HZUNQ6SSN_JN6wwxVz4Y53VFiecfzcJgX7Dp5D7DBjIWYvrebSV0EmdIBf0RSmA/exec"; 
-    let pelajar = null;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyetp-HZUNQ6SSN_JN6wwxVz4Y53VFiecfzcJgX7Dp5D7DBjIWYvrebSV0EmdIBf0RSmA/exec";
+    let student = null;
 
-    function prosesMasuk() {
+    // FUNGSI JSONP (Memastikan butang tidak stuck)
+    function mulaLogMasuk() {
         const ic = document.getElementById('ic-field').value.replace(/-/g, "").trim();
-        const btn = document.getElementById('login-btn');
+        const btn = document.getElementById('btn-login');
         if(!ic) return alert("Sila masukkan IC!");
 
-        btn.innerText = "MENGHUBUNG PANGKALAN DATA...";
+        btn.innerText = "MENYEMAK PANGKALAN DATA...";
         btn.disabled = true;
 
         const script = document.createElement('script');
-        script.src = `${SCRIPT_URL}?action=login&ic=${ic}&callback=responLogin`;
+        script.src = `${SCRIPT_URL}?action=login&ic=${ic}&callback=handleResponse`;
         document.body.appendChild(script);
     }
 
-    function responLogin(res) {
+    function handleResponse(res) {
         if(res.result === "success") {
-            pelajar = res.data;
-            pelajar.ic = document.getElementById('ic-field').value.trim();
+            student = res.data;
+            student.ic = document.getElementById('ic-field').value.trim();
             document.getElementById('login-zone').classList.add('hidden');
             document.getElementById('exam-zone').classList.remove('hidden');
-            document.getElementById('info-pelajar').innerText = pelajar.nama + " (" + pelajar.no_matrik + ")";
+            document.getElementById('nama-pelajar').innerText = student.nama;
+            document.getElementById('matrik-pelajar').innerText = "MATRIK: " + student.no_matrik + " | KELAS: " + student.kelas;
             mulaiMasa();
         } else {
-            alert("Ralat: No. IC tidak ditemui dalam senarai atau sudah menjawab.");
-            document.getElementById('login-btn').innerText = "MULA UJIAN";
-            document.getElementById('login-btn').disabled = false;
+            document.getElementById('msg-error').classList.remove('hidden');
+            document.getElementById('btn-login').innerText = "SAHKAN & MULA UJIAN";
+            document.getElementById('btn-login').disabled = false;
         }
     }
 
@@ -96,42 +116,46 @@
         }, 1000);
     }
 
-    function hantarUjian() {
+    async function hantarUjian() {
+        if(!confirm("Adakah anda pasti mahu menghantar?")) return;
+        
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        doc.setFontSize(14);
-        doc.text("SKRIP JAWAPAN KUIZ 1 MPU2071", 105, 20, {align: 'center'});
+        doc.setFontSize(16);
+        doc.text("SKRIP JAWAPAN: MPU2071", 105, 20, {align: 'center'});
         doc.setFontSize(10);
-        doc.text("NAMA: " + pelajar.nama, 20, 35);
-        doc.text("MATRIK: " + pelajar.no_matrik, 20, 42);
+        doc.text("NAMA: " + student.nama, 20, 35);
+        doc.text("MATRIK: " + student.no_matrik, 20, 42);
         
-        const jawapan = [
+        const ans = [
             document.getElementById('ans1').value,
             document.getElementById('ans2').value,
             document.getElementById('ans3').value,
             document.getElementById('ans4').value
         ];
 
-        let y = 55;
-        jawapan.forEach((j, i) => {
-            doc.text("Soalan " + (i+1) + ":", 20, y);
-            const splitJ = doc.splitTextToSize(j, 170);
-            doc.text(splitJ, 20, y + 7);
-            y += (splitJ.length * 7) + 15;
+        let y = 60;
+        ans.forEach((a, i) => {
+            doc.setFont("helvetica", "bold");
+            doc.text("Jawapan Soalan " + (i+1) + ":", 20, y);
+            doc.setFont("helvetica", "normal");
+            const splitA = doc.splitTextToSize(a, 170);
+            doc.text(splitA, 20, y + 7);
+            y += (splitA.length * 7) + 15;
         });
 
-        doc.save("JAWAPAN_MPU2071_" + pelajar.no_matrik + ".pdf");
+        doc.save(`MPU2071_${student.no_matrik}.pdf`);
 
         // Update Google Sheet Status
-        fetch(SCRIPT_URL, {
+        await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify({action: 'submit', ic: pelajar.ic})
+            body: JSON.stringify({action: 'submit', ic: student.ic})
         });
 
-        alert("Jawapan Berjaya Dihantar!");
-        location.reload();
+        document.getElementById('exam-zone').classList.add('hidden');
+        document.getElementById('success-zone').classList.remove('hidden');
     }
 </script>
 </body>
