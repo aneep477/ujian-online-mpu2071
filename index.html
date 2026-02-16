@@ -1,87 +1,206 @@
-<style>
-    /* ... (CSS sedia ada) ... */
-    
-    #timer-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--neon-red);
-        color: #fff;
-        padding: 10px 20px;
-        font-family: 'JetBrains Mono';
-        font-weight: bold;
-        border: 2px solid #fff;
-        z-index: 500;
-        display: none; /* Hanya muncul selepas login */
-        box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
-    }
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS // PROTOKOL PEPERIKSAAN MPU2071</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0D0D0D; --amber: #FFB800; --neon-red: #FF003C; --border: 1px solid rgba(255, 184, 0, 0.3); }
+        body { background-color: var(--bg); color: var(--amber); font-family: 'JetBrains Mono', monospace; margin: 0; overflow-x: hidden; }
+        
+        /* UI Components */
+        #app-container { max-width: 900px; margin: 40px auto; padding: 20px; display: none; }
+        .card { background: rgba(20, 20, 20, 0.95); border: var(--border); padding: 25px; margin-bottom: 20px; border-radius: 4px; }
+        h1 { font-family: 'Bebas Neue'; font-size: 3.5rem; margin: 0; letter-spacing: 2px; }
+        
+        textarea { width: 100%; background: #151515; border: 1px solid #333; color: #fff; padding: 15px; font-family: 'JetBrains Mono'; min-height: 120px; border-radius: 4px; outline: none; }
+        textarea:focus { border-color: var(--amber); }
+        
+        canvas { background: #fff; width: 100%; height: 350px; border: 2px solid var(--amber); cursor: crosshair; touch-action: none; }
+        
+        .btn { background: var(--amber); color: #000; border: none; padding: 18px; font-family: 'Bebas Neue'; font-size: 1.5rem; cursor: pointer; width: 100%; transition: 0.3s; }
+        .btn:hover { background: #fff; transform: scale(1.01); }
+        .btn:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-    .timer-low {
-        animation: blink 1s infinite;
-    }
+        /* Timer UI */
+        #timer-container { position: fixed; top: 20px; right: 20px; background: var(--neon-red); color: #fff; padding: 10px 20px; font-weight: bold; border: 2px solid #fff; z-index: 1000; display: none; box-shadow: 0 0 15px rgba(255, 0, 60, 0.5); }
+        .low-time { animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-    @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.3; }
-        100% { opacity: 1; }
-    }
-</style>
+        /* Screens */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        #warning-overlay { position: fixed; inset: 0; background: rgba(255, 0, 60, 0.95); color: #fff; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
+    </style>
+</head>
+<body>
 
-<div id="timer-container">
-    MASA TERSISA: <span id="time-display">30:00</span>
+<div id="timer-container">MASA TERSISA: <span id="time-display">30:00</span></div>
+
+<div id="warning-overlay">
+    <h1 style="font-size: 5rem;">AMARAN!</h1>
+    <p style="font-size: 1.5rem;">PELANGGARAN PROTOKOL: JANGAN TUKAR TAB/SKRIN.</p>
+    <p style="font-size: 2rem;">NYAWA: <span id="lives-display">3</span>/3</p>
+</div>
+
+<div id="login-screen">
+    <div class="card" style="width: 380px; text-align: center;">
+        <h2 style="font-family: 'Bebas Neue'; font-size: 2.5rem; margin-bottom: 20px;">SECURITY AUTH</h2>
+        <input type="text" id="ic-input" placeholder="NO. KAD PENGENALAN" style="width: 90%; padding: 12px; margin-bottom: 20px; text-align: center; font-size: 1.1rem;">
+        <button class="btn" onclick="authenticate()">MULAKAN UJIAN</button>
+        <p style="font-size: 0.7rem; margin-top: 15px; opacity: 0.5;">SILA PASTIKAN NO. IC TEPAT SEPERTI DALAM REKOD.</p>
+    </div>
+</div>
+
+<div id="app-container">
+    <header style="border-left: 5px solid var(--amber); padding-left: 20px; margin-bottom: 40px;">
+        <p style="font-size: 0.9rem; opacity: 0.7; letter-spacing: 3px;">MPU2071 // PENGURUSAN KOKURIKULUM</p>
+        <h1>SUBJEKTIF_PORTAL.v3</h1>
+        <div id="user-info" style="margin-top: 10px; font-size: 0.9rem; color: #fff;"></div>
+    </header>
+
+    <div class="card">
+        <label>S1: Senaraikan 5 Matlamat kokurikulum selaras Falsafah Pendidikan Negara.</label>
+        <textarea id="q1" placeholder="Jawapan anda..."></textarea>
+    </div>
+
+    <div class="card">
+        <label>S2: Bina struktur organisasi Persatuan Sejarah (Lukis di bawah).</label>
+        <div style="margin: 10px 0;"><button onclick="clearCanvas()" style="padding: 5px 10px; cursor: pointer;">Padam Lukisan</button></div>
+        <canvas id="canvas-s2"></canvas>
+    </div>
+
+    <div class="card">
+        <label>S3: Senaraikan kelompok gerak kerja kokurikulum dan berikan contoh.</label>
+        <textarea id="q3" placeholder="Jawapan anda..."></textarea>
+    </div>
+
+    <div class="card">
+        <label>S4: Jelaskan 5 tugas bendahari dalam Pasukan Kadet Remaja Sekolah.</label>
+        <textarea id="q4" placeholder="Jawapan anda..."></textarea>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitExam()">HANTAR JAWAPAN KE PENSYARAH</button>
 </div>
 
 <script>
-    // --- KONFIGURASI MASA ---
-    const MASA_UJIAN_MINIT = 30; 
-    let masaTersisaSaat = MASA_UJIAN_MINIT * 60;
-    let pemasaInterval;
+    // --- KONFIGURASI ---
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxwuTP9yXecBY80LDJqCKjqFKHmZHYKdarno58gV23KIUHyxPUkdq_ARdJi9-yhK8bIhw/exec'; 
+    let userData = { ic: '', nama: '', lives: 3, violations: 0, isFlaggedAI: false };
+    let timerMinit = 30;
+    let masaTersisa = timerMinit * 60;
+    let isExamActive = false;
+    let timerInterval;
 
-    // ... (Fungsi authenticate sedia ada) ...
+    // --- AUTHENTICATION ---
+    async function authenticate() {
+        let icValue = document.getElementById('ic-input').value.trim().replace(/-/g, "");
+        if(!icValue) return alert("Sila masukkan No. IC!");
 
+        const btn = document.querySelector('#login-screen .btn');
+        btn.innerText = "MENYEMAK...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`${WEB_APP_URL}?ic=${icValue}&t=${Date.now()}`);
+            const data = await response.json();
+
+            if(data.status === 'AUTHORIZED') {
+                userData.ic = icValue;
+                userData.nama = data.nama;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('user-info').innerHTML = `CALON: <b>${data.nama}</b> | NO. IC: <b>${icValue}</b>`;
+                startExam();
+            } else if(data.status === 'ALREADY_SUBMITTED') {
+                alert("Ralat: Anda telah pun menghantar jawapan sebelum ini.");
+                location.reload();
+            } else {
+                alert("No. IC tidak dijumpai dalam pangkalan data.");
+                btn.innerText = "MULAKAN UJIAN";
+                btn.disabled = false;
+            }
+        } catch(e) {
+            alert("Ralat sambungan. Sila pastikan URL Web App adalah betul.");
+            btn.disabled = false;
+        }
+    }
+
+    // --- EXAM LOGIC ---
     function startExam() {
-        document.documentElement.requestFullscreen();
-        document.getElementById('timer-container').style.display = 'block'; // Papar pemasa
+        isExamActive = true;
+        document.getElementById('timer-container').style.display = 'block';
         
-        // Mula pengiraan detik
-        pemasaInterval = setInterval(updateTimer, 1000);
+        // Timer Interval
+        timerInterval = setInterval(updateTimer, 1000);
 
+        // Security Detection
         document.addEventListener('visibilitychange', () => {
             if(document.hidden && isExamActive) {
-                // Logik amaran/nyawa sedia ada
-                triggerViolation();
+                userData.violations++;
+                userData.lives--;
+                document.getElementById('lives-display').innerText = userData.lives;
+                document.getElementById('warning-overlay').style.display = 'flex';
+                
+                if(userData.lives <= 0) {
+                    alert("NYAWA TAMAT: Jawapan anda akan dihantar secara automatik.");
+                    submitExam();
+                }
+                setTimeout(() => { document.getElementById('warning-overlay').style.display = 'none'; }, 3000);
             }
         });
+
         initCanvas();
     }
 
     function updateTimer() {
-        if (masaTersisaSaat <= 0) {
-            clearInterval(pemasaInterval);
-            alert("MASA TAMAT! Jawapan anda akan dihantar secara automatik.");
-            submitExam(); // Hantar paksa
+        if(masaTersisa <= 0) {
+            clearInterval(timerInterval);
+            submitExam();
             return;
         }
-
-        masaTersisaSaat--;
-        
-        const minit = Math.floor(masaTersisaSaat / 60);
-        const saat = masaTersisaSaat % 60;
-        
-        const display = `${minit.toString().padStart(2, '0')}:${saat.toString().padStart(2, '0')}`;
-        const el = document.getElementById('time-display');
-        el.innerText = display;
-
-        // Amaran jika baki masa kurang 5 minit
-        if (masaTersisaSaat <= 300) {
-            document.getElementById('timer-container').classList.add('timer-low');
-        }
+        masaTersisa--;
+        let m = Math.floor(masaTersisa / 60).toString().padStart(2, '0');
+        let s = (masaTersisa % 60).toString().padStart(2, '0');
+        document.getElementById('time-display').innerText = `${m}:${s}`;
+        if(masaTersisa < 300) document.getElementById('timer-container').classList.add('low-time');
     }
 
-    async function submitExam() {
-        // Hentikan pemasa jika dihantar manual sebelum tamat
-        clearInterval(pemasaInterval);
+    // --- CANVAS DRAWING ---
+    const canvas = document.getElementById('canvas-s2');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function initCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = 350;
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
         
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
+        canvas.addEventListener('mousemove', draw);
+    }
+
+    function draw(e) {
+        if(!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
+    }
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // --- SUBMISSION ---
+    async function submitExam() {
+        if(!isExamActive) return;
+        isExamActive = false;
+        clearInterval(timerInterval);
+
+        const btn = document.getElementById('submit-btn');
+        btn.innerText = "MENGHANTAR KE EMEL PENSYARAH...";
+        btn.disabled = true;
+
         const payload = {
             ic: userData.ic,
             nama: userData.nama,
@@ -90,27 +209,23 @@
             q3: document.getElementById('q3').value,
             q4: document.getElementById('q4').value,
             violations: userData.violations,
-            isAI: userData.isFlaggedAI,
-            statusHantaran: masaTersisaSaat <= 0 ? "AUTO_SUBMIT_TIMEOUT" : "MANUAL_SUBMIT"
+            isAI: userData.isFlaggedAI
         };
 
-        const btn = document.getElementById('submit-btn');
-        btn.innerText = "PROTOKOL PENGHANTARAN AKTIF...";
-        btn.disabled = true;
-
         try {
-            // Gunakan URL Web App anda yang telah di-deploy semula
-            await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify(payload) 
+            // Menggunakan mode 'no-cors' untuk Apps Script POST
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
             });
-            
-            alert("SISTEM: Jawapan telah berjaya dihantar ke emel pensyarah.");
-            // Tutup aplikasi
-            document.body.innerHTML = "<div style='color:white;text-align:center;margin-top:20%;'><h1>UJIAN TAMAT</h1><p>Sila tutup tetingkap pelayar anda.</p></div>";
+
+            alert("BERJAYA: Jawapan anda telah dihantar terus kepada pensyarah.");
+            document.body.innerHTML = "<div style='color:#FFB800; text-align:center; margin-top:20%; font-family:Bebas Neue;'><h1>UJIAN SELESAI</h1><p>Sila tutup tetingkap ini.</p></div>";
         } catch(e) {
-            alert("RALAT: Gagal menghantar. Sila tangkap layar (screenshot) jawapan anda segera!");
+            alert("Ralat penghantaran. Sila hubungi pensyarah anda.");
         }
     }
 </script>
+</body>
+</html>
