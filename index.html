@@ -2,114 +2,135 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <title>UJIAN MPU2071 - IPG KAMPUS DARULAMAN</title>
+    <title>AEGIS // PROTOKOL PEPERIKSAAN MPU2071</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --amber: #FFB800; --bg: #0d0d0d; }
-        body { background: var(--bg); color: #fff; font-family: system-ui; padding: 20px; }
-        .card { background: #161616; padding: 25px; border-radius: 10px; max-width: 800px; margin: auto; border: 1px solid #333; }
-        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin: 10px 0; border-radius: 5px; box-sizing: border-box; }
-        .btn { background: var(--amber); color: #000; padding: 15px; border: none; width: 100%; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        #canvas { background: #fff; border: 2px solid var(--amber); cursor: crosshair; touch-action: none; border-radius: 5px; }
-        .hidden { display: none; }
-        .q-text { font-weight: bold; color: var(--amber); margin-top: 25px; }
+        :root { --bg: #0D0D0D; --amber: #FFB800; --neon-red: #FF003C; --border: 1px solid rgba(255, 184, 0, 0.3); }
+        body { background-color: var(--bg); color: var(--amber); font-family: 'JetBrains Mono', monospace; margin: 0; }
+        #app-container { max-width: 900px; margin: 40px auto; padding: 20px; display: none; }
+        .card { background: rgba(20, 20, 20, 0.95); border: var(--border); padding: 25px; margin-bottom: 20px; }
+        h1 { font-family: 'Bebas Neue'; font-size: 3.5rem; margin: 0; }
+        textarea { width: 100%; background: #151515; border: 1px solid #333; color: #fff; padding: 15px; font-family: 'JetBrains Mono'; min-height: 100px; }
+        canvas { background: #fff; width: 100%; height: 300px; border: 2px solid var(--amber); cursor: crosshair; }
+        .btn { background: var(--amber); color: #000; border: none; padding: 15px 30px; font-family: 'Bebas Neue'; font-size: 1.2rem; cursor: pointer; width: 100%; }
+        #warning-overlay { position: fixed; inset: 0; background: rgba(255, 0, 60, 0.95); color: #fff; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        #login-screen { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
-<div id="login-zone" class="card">
-    <h2 style="color: var(--amber)">PENGURUSAN KOKURIKULUM (MPU2071)</h2>
-    <p>Masukkan IC untuk mula ujian:</p>
-    <input type="text" id="ic-field" placeholder="Contoh: 981016065935">
-    <button class="btn" id="btn-auth" onclick="startAuth()">MASUK SEKARANG</button>
+<div id="warning-overlay">
+    <h1 style="font-size: 5rem;">AMARAN KESELAMATAN</h1>
+    <p>SILA KEMBALI KE SKRIN PENUH. NYAWA TERSISA: <span id="lives-display"></span></p>
 </div>
 
-<div id="exam-zone" class="card hidden">
-    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px;">
-        <span id="p-name"></span>
-        <span id="timer" style="color:var(--amber); font-weight:bold;">30:00</span>
+<div id="login-screen">
+    <div class="card" style="width: 350px; text-align: center;">
+        <h2 style="font-family: 'Bebas Neue'; font-size: 2rem;">SECURITY AUTH</h2>
+        <input type="text" id="ic-input" placeholder="NO. KAD PENGENALAN" style="width: 100%; padding: 12px; margin: 20px 0;">
+        <button class="btn" onclick="authenticate()">LOG MASUK</button>
     </div>
+</div>
 
-    <p class="q-text">1. Berikan 5 matlamat kokurikulum selaras dengan Falsafah Pendidikan Negara. (5 Markah)</p>
-    <textarea id="ans1" rows="4"></textarea>
+<div id="app-container">
+    <header style="border-left: 5px solid var(--amber); padding-left: 15px; margin-bottom: 30px;">
+        <p style="font-size: 0.8rem; opacity: 0.6;">SYSTEM PROTOCOL MPU2071</p>
+        <h1>SUBJEKTIF_PORTAL.v2</h1>
+        <p id="user-info" style="margin-top: 10px; font-weight: bold;"></p>
+    </header>
 
-    <p class="q-text">2. LUKIS CARTA ORGANISASI: Binakan struktur organisasi Persatuan Sejarah sekolah. (4 Markah)</p>
-    <button type="button" onclick="clearDraw()" style="margin-bottom:5px; background:#444; color:#fff; border:none; padding:5px 10px; cursor:pointer;">Padam Lukisan</button><br>
-    <canvas id="canvas" width="750" height="350"></canvas>
+    <div class="card"><label>S1: 5 Matlamat kokurikulum selaras FPN.</label><textarea id="q1"></textarea></div>
+    <div class="card"><label>S2: Struktur Organisasi Persatuan Sejarah.</label><canvas id="q2-canvas"></canvas></div>
+    <div class="card"><label>S3: Kelompok gerak kerja kokurikulum & contoh.</label><textarea id="q3"></textarea></div>
+    <div class="card"><label>S4: 5 tugas bendahari Pasukan KRS.</label><textarea id="q4"></textarea></div>
 
-    <p class="q-text">3. Nyatakan kelompok gerak kerja kokurikulum dan contohnya. (6 Markah)</p>
-    <textarea id="ans3" rows="4"></textarea>
-
-    <p class="q-text">4. Nyatakan 5 tugas Bendahari Pasukan Kadet Remaja Sekolah. (5 Markah)</p>
-    <textarea id="ans4" rows="4"></textarea>
-
-    <button class="btn" style="margin-top:30px;" onclick="finishExam()">HANTAR & JANA PDF</button>
+    <button class="btn" id="submit-btn" onclick="submitExam()">HANTAR & JANA PDF</button>
 </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbyetp-HZUNQ6SSN_JN6wwxVz4Y53VFiecfzcJgX7Dp5D7DBjIWYvrebSV0EmdIBf0RSmA/exec";
-    let user = null;
-    let canvas, ctx, isDrawing = false;
-
-    function startAuth() {
-        const ic = document.getElementById('ic-field').value.replace(/-/g, "");
-        document.getElementById('btn-auth').innerText = "MENYEMAK...";
-        const s = document.createElement('script');
-        s.src = `${API}?action=login&ic=${ic}&callback=onLogin`;
-        document.body.appendChild(s);
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxwuTP9yXecBY80LDJqCKjqFKHmZHYKdarno58gV23KIUHyxPUkdq_ARdJi9-yhK8bIhw/exec';
+    let userData = { ic: '', nama: '', lives: 3, violations: 0, isFlaggedAI: false };
+    
+    // Auth & Security
+    async function authenticate() {
+        const ic = document.getElementById('ic-input').value;
+        if(!ic) return alert("Masukkan IC!");
+        
+        try {
+            const res = await fetch(`${WEB_APP_URL}?ic=${ic}`);
+            const data = await res.json();
+            
+            if(data.status === 'AUTHORIZED') {
+                userData.ic = ic;
+                userData.nama = data.nama;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('user-info').innerText = `CALON: ${data.nama} | IC: ${ic}`;
+                startExam();
+            } else if(data.status === 'ALREADY_SUBMITTED') {
+                alert("Anda telah pun menghantar jawapan.");
+            } else {
+                alert("IC tidak berdaftar.");
+            }
+        } catch(e) { alert("Ralat sambungan pangkalan data."); }
     }
 
-    function onLogin(r) {
-        if(r.result === "success") {
-            user = r.data; user.ic = document.getElementById('ic-field').value;
-            document.getElementById('login-zone').className = "hidden";
-            document.getElementById('exam-zone').className = "card";
-            document.getElementById('p-name').innerText = user.nama;
-            setupDraw(); startTimer();
-        } else {
-            alert("IC Tidak Dijumpai!");
-            document.getElementById('btn-auth').innerText = "MASUK SEKARANG";
-        }
+    function startExam() {
+        document.documentElement.requestFullscreen();
+        document.addEventListener('visibilitychange', () => {
+            if(document.hidden) {
+                userData.violations++;
+                userData.lives--;
+                document.getElementById('lives-display').innerText = userData.lives;
+                document.getElementById('warning-overlay').style.display = 'flex';
+                if(userData.lives <= 0) submitExam();
+                setTimeout(() => document.getElementById('warning-overlay').style.display = 'none', 3000);
+            }
+        });
+        initCanvas();
     }
 
-    function setupDraw() {
-        canvas = document.getElementById('canvas'); ctx = canvas.getContext('2d');
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-        const getPos = (e) => {
-            const r = canvas.getBoundingClientRect();
-            return { x: (e.clientX || e.touches[0].clientX) - r.left, y: (e.clientY || e.touches[0].clientY) - r.top };
+    // Canvas Logic
+    const canvas = document.getElementById('q2-canvas');
+    const ctx = canvas.getContext('2d');
+    function initCanvas() {
+        canvas.width = canvas.offsetWidth; canvas.height = 300;
+        let drawing = false;
+        canvas.onmousedown = () => drawing = true;
+        canvas.onmouseup = () => { drawing = false; ctx.beginPath(); };
+        canvas.onmousemove = (e) => {
+            if(!drawing) return;
+            ctx.lineWidth = 2; ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke();
         };
-        const start = (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
-        const move = (e) => { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-        canvas.onmousedown = start; canvas.onmousemove = move; window.onmouseup = () => isDrawing = false;
-        canvas.ontouchstart = start; canvas.ontouchmove = move;
     }
 
-    function clearDraw() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    async function submitExam() {
+        const payload = {
+            ic: userData.ic, nama: userData.nama,
+            jawapanS1: document.getElementById('q1').value,
+            jawapanS2: canvas.toDataURL(),
+            jawapanS3: document.getElementById('q3').value,
+            jawapanS4: document.getElementById('q4').value,
+            violationCount: userData.violations,
+            isFlaggedAI: userData.isFlaggedAI,
+            wpmAvg: "DIKIRA_SISTEM"
+        };
 
-    function startTimer() {
-        let t = 1800;
-        setInterval(() => {
-            t--; let m = Math.floor(t/60), s = t%60;
-            document.getElementById('timer').innerText = m + ":" + (s<10?"0"+s:s);
-            if(t <= 0) finishExam();
-        }, 1000);
-    }
+        const btn = document.getElementById('submit-btn');
+        btn.innerText = "MENGHANTAR..."; btn.disabled = true;
 
-    async function finishExam() {
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+        
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.text("KUIZ MPU2071: " + user.nama, 20, 20);
-        doc.text("Jawapan 1: " + document.getElementById('ans1').value, 20, 40);
+        doc.text(`SLIP JAWAPAN: ${userData.nama}`, 10, 10);
+        doc.text(`IC: ${userData.ic}`, 10, 20);
+        doc.text(`Pelanggaran: ${userData.violations}`, 10, 30);
+        doc.save(`Jawapan_${userData.ic}.pdf`);
         
-        doc.addPage();
-        doc.text("Soalan 2 (Carta Organisasi):", 20, 20);
-        doc.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 30, 180, 85);
-        
-        doc.save(`JAWAPAN_${user.no_matrik}.pdf`);
-
-        fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'submit', ic: user.ic}) });
-        alert("Selesai! Sila simpan PDF."); location.reload();
+        alert("Selesai. Slip anda telah dijana.");
+        location.reload();
     }
 </script>
 </body>
